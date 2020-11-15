@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 
 async function scrapeChannel(url) {
-  const browser = await puppeteerlaunch({ args: ['--no-sandbox'] });
+  const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
   await page.goto(url);
 
