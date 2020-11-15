@@ -8,7 +8,8 @@ const port = process.env.PORT || 3000;
 const uri = 'mongodb+srv://admin:15853456@scraping.bwncg.mongodb.net/scraping?retryWrites=true&w=majority';
 const db = monk(uri);
 const creators = db.get('creators');
-
+creators.options.castIds = false;
+console.log(creators.options.castIds);
 app.use(express.static('client'));
 app.use(bodyParser.json());
 app.use(function (req, res, next) {
