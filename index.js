@@ -55,4 +55,4 @@ app.post('/creators', async(req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Example app listening on port ${port}`));
+app.listen(port || 3000, () => console.log(`Example app listening on port ${port}`));
