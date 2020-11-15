@@ -31,5 +31,7 @@
     "url": "https://github.com/sunny-THS/crawl/issues"
   },
   "homepage": "https://github.com/sunny-THS/crawl#readme",
-  "description": ""
+  "engines": {
+    "node": "10.x"
+  }
 }
