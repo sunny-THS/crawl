@@ -1,12 +1,25 @@
+function RemoveAllChannel() {
+  var ctr = document.querySelector('.container');
+  while (ctr.hasChildNodes()) {
+      ctr.removeChild(ctr.firstChild);
+  }
+  fetch('../RemoveAll');
+}
 function submitChannel() {
   const channelURL = document.querySelector('.channel-input').value;
-  fetch('http://localhost:5000/creators', {
+  fetch('../creators', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({channelURL})
-  })
+  }).then(res => res.json())
+    .then(data =>
+      {
+        ShowData(data);
+        const ctr = document.querySelector('.container');
+        ctr.scrollTop = ctr.scrollHeight;
+      });
 }
 function newEl(type, attrs={}) {
   const el = document.createElement(type);
@@ -18,19 +31,23 @@ function newEl(type, attrs={}) {
   return el;
 }
 
+function ShowData(val) {
+  const ctr = document.querySelector('.container');
+  const card = newEl('div', {class: 'card'});
+  const title = newEl('h4', {innerText: val.name});
+  const img = newEl('img', {src: val.avatarURL});
+  card.appendChild(title);
+  card.appendChild(img);
+  ctr.appendChild(card);
+}
 async function loadCreators() {
-  const res = await fetch('http://localhost:5000/creators');
+  const res = await fetch('../creators');
   const creators = await res.json();
   console.log(creators);
-  const ctr = document.querySelector('.container');
 
   creators.forEach(creator => {
-    const card = newEl('div', {class: 'card'});
-    const title = newEl('h4', {innerText: creator.name});
-    const img = newEl('img', {src: creator.avatarURL});
-    card.appendChild(title);
-    card.appendChild(img);
-    ctr.appendChild(card);
+    ShowData(creator);
   });
+  return creators;
 }
 loadCreators();

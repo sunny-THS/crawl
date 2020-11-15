@@ -1,16 +1,16 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const monk = require('monk');
-const dotenv = require('dotenv');
 const scrapes = require('./scrapes');
+require('dotenv').config();
 
-dotenv.config();
 const app = express();
 const port = process.env.PORT;
 const uri = process.env.MONGOURI;
 const db = monk(uri);
 const creators = db.get('creators');
 
+app.use(express.static('client'));
 app.use(bodyParser.json());
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", '*'); // disabled for security local
@@ -32,6 +32,10 @@ app.get('/creators', async(req, res) => {
     })
 });
 
+app.get('/RemoveAll', async(req, res) =>{
+  creators.remove();
+});
+
 function isValid(val) {
   return val.channelURL && val.channelURL.toString().trim() !== '';
 }
@@ -42,7 +46,9 @@ app.post('/creators', async(req, res) => {
     console.log(channelData);
     creators
       .insert(channelData)
-      .then(created => console.log('add success'));
+      .then(creator => {
+        res.send(creator);
+      });
   }else {
     res.status(422);
     res.json({massage: "Error"})
