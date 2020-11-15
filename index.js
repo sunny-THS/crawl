@@ -5,7 +5,7 @@ const scrapes = require('./scrapes');
 require('dotenv').config();
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 const uri = process.env.MONGOURI;
 const db = monk(uri);
 const creators = db.get('creators');
@@ -55,4 +55,4 @@ app.post('/creators', async(req, res) => {
   }
 });
 
-app.listen(port || 3000, () => console.log(`Example app listening on port ${port}`));
+app.listen(port, () => console.log(`Example app listening on port ${port}`));
