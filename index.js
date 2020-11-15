@@ -2,11 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const monk = require('monk');
 const scrapes = require('./scrapes');
-require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
-const uri = process.env.MONGOURI;
+const uri = 'mongodb+srv://admin:15853456@scraping.bwncg.mongodb.net/scraping?retryWrites=true&w=majority';
 const db = monk(uri);
 const creators = db.get('creators');
 
