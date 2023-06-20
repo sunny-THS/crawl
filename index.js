@@ -13,7 +13,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.get('/:url', async(req, res) => {
+app.get('/crawl-comics/:url', async(req, res) => {
   let chapter_images = await scrapeChannel(req.params.url);
   console.log(chapter_images);
   res.json({
