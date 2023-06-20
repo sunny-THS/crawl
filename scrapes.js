@@ -5,16 +5,14 @@ async function scrapeChannel(url) {
   const page = await browser.newPage();
   await page.goto(url);
 
-  const [el] = await page.$x('/html/body/ytd-app/div/ytd-page-manager/ytd-browse/div[3]/ytd-c4-tabbed-header-renderer/app-header-layout/div/app-header/div[2]/div[2]/div/div[1]/div/div[1]/ytd-channel-name/div/div/yt-formatted-string');
-  const text = await el.getProperty('textContent');
-  const name = await text.jsonValue();
-
-  const [el2] = await page.$x('//*[@id="img"]');
-  const src = await el2.getProperty('src');
-  const avatarURL = await src.jsonValue();
-
+  const images = await page.$$('#divImage image');
+  const images_url = [];
+  for (let index = 0; index < images.length; index++) {
+    images_url.push(await images[index].getProperty('src'));
+  }
+  console.log(images_url);
   browser.close();
-  return {name, avatarURL};
+  return images_url;
 }
 
 module.exports = {
