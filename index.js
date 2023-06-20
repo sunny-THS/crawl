@@ -18,7 +18,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.get('/', async(req, res) => {
+app.get('/app', async(req, res) => {
   res.json({
     message: 'Hello'
   })
