@@ -3,7 +3,11 @@ const puppeteer = require('puppeteer');
 async function scrapeChannel(url) {
   const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
-  await page.goto(`${url}&quality=hq&readtype=1`);
+  await page.goto(`${url}&quality=hq&readtype=1`, {
+    waitUntil: "domcontentloaded",
+  })
+  .catch((err) => console.log("error loading url", err));
+  console.timeEnd("goto");
 
   const images = await page.$$('#divImage image');
   const images_url = [];
