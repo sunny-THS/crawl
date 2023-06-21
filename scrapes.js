@@ -48,7 +48,7 @@ const blocked_domains = [
 
 async function scrapeComics(url) {
   const browser = await puppeteer.launch({ 
-    headless: true,
+    headless: process.env.NODE_ENV === "production",
     args: minimal_args,
     /*[
       "--disable-setuid-sandbox",
