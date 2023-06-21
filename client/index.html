@@ -4,8 +4,19 @@
     <meta charset="utf-8">
     <title></title>
     <link rel="stylesheet" href="style.css">
+    <script defer src="index.js"></script>
   </head>
-  <body style="display: flex; align-content: center; justify-content: center;">
-    <h1>Crawl comics</h1>
+  <body>
+    <h1 style="text-align: center;">Crawl comics</h1>
+    Comics name: <input type="text" name="comic_name" id="comic_name" /> 
+    <br />
+    <br />
+    Chapter name: <input type="text" name="chapter_name" id="chapter_name" /> 
+    <br />
+    <br />
+    <button onclick="crawlComics()">Crawl</button>
+    <br />
+    <br />
+    <pre id="result"></pre>
   </body>
 </html>

@@ -14,7 +14,9 @@
     "body-parser": "^1.19.0",
     "dotenv": "^16.3.1",
     "express": "^4.17.1",
-    "puppeteer": "^20.7.2"
+    "puppeteer": "^20.7.2",
+    "request": "^2.88.2",
+    "wildcard-match": "^5.1.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
