@@ -46,6 +46,62 @@ const blocked_domains = [
   'adservice.google.com',
 ];
 
+async function scrapeComicsChapter(url) {
+  const browser = await puppeteer.launch({ 
+    headless: process.env.NODE_ENV === "production",
+    args: minimal_args,
+    /*[
+      "--disable-setuid-sandbox",
+      "--no-sandbox",
+      "--single-process",
+      "--no-zygote",
+    ],*/
+    executablePath:
+      process.env.NODE_ENV === "production"
+        ? process.env.PUPPETEER_EXECUTABLE_PATH
+        : puppeteer.executablePath(), 
+  });
+
+  try {  
+    const page = await browser.newPage();
+
+    page.setRequestInterception(true);
+
+    page.on('request', (request) => {
+      if (blockRequest(request.url()) || request.resourceType() == "stylesheet" ) {
+        const u = request.url();
+        console.log(`request to ${u.substring(0, 50)}...${u.substring(u.length - 5)} is aborted`);
+
+        request.abort();
+
+        return;
+      }
+      if (blocked_domains.some(domain => url.includes(domain))) {    
+        request.abort();
+        return;
+      }
+
+      request.continue();
+    });
+
+    console.time("goto");
+
+    await page.goto(url, {
+      waitUntil: "domcontentloaded",
+    });
+    await delay(3000);
+
+    await page.waitForSelector('.child');
+
+    console.timeEnd("goto");
+
+  } catch (error) {
+    console.log('error', error);
+  } finally {
+    browser.close();
+  }
+}
+
 async function scrapeComics(url) {
   const browser = await puppeteer.launch({ 
     headless: process.env.NODE_ENV === "production",
@@ -99,11 +155,11 @@ async function scrapeComics(url) {
       waitUntil: "domcontentloaded",
     });
 
-    await delay(2000);
+    await delay(2500);
 
     await page.waitForSelector('#divImage');
 
-    await delay(2000);
+    await delay(2500);
 
     await autoScroll(page);
     // await scrollBottom(page);
@@ -134,7 +190,7 @@ async function autoScroll(page){
   await page.evaluate(async () => {
       await new Promise((resolve) => {
           var totalHeight = 0;
-          var distance = 600;
+          var distance = 400;
           var timer = setInterval(() => {
               var scrollHeight = document.body.scrollHeight;
               window.scrollBy(0, distance);
@@ -157,5 +213,5 @@ async function scrollBottom(page){
 }
 
 module.exports = {
-  scrapeComics
+  scrapeComics, scrapeComicsChapter
 }
