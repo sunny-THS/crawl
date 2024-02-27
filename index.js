@@ -1060,6 +1060,13 @@ app.get('/crawl-soundtracks', async (req, res) => {
       }
       episodeArray.push(temp)
     }
+    //add speceial episode
+    const specialEpisode = {
+      name: 'Special Episode',
+      slug: 'special-episode',
+      season_id: seasonId
+    }
+    episodeArray.push(specialEpisode)
     //2. add episode on season id newest
     await fetch(`http://45.79.198.164:5000/episode/addList`, {
       method: 'POST',
@@ -1068,9 +1075,20 @@ app.get('/crawl-soundtracks', async (req, res) => {
       },
       body: JSON.stringify(episodeArray),
     })
-
+    const listSoundtrack = dataSoundtrack.dataSoundtrack;
     //add soundtrack
     const listEpisodeRes = dataSoundtrack.listEpisode;
+    let countSpecialEpisode = listSoundtrack.length;
+    for (let i = 0; i < listEpisodeRes.length; i++) {
+      countSpecialEpisode = countSpecialEpisode - listEpisodeRes[i].soundtrackCount
+    }
+    const specialEpisodeWithCount = {
+      name: 'Special Episode',
+      slug: 'special-episode',
+      soundtrackCount: countSpecialEpisode,
+      season_id: seasonId
+    }
+    listEpisodeRes.push(specialEpisodeWithCount)
 
     //get id episode
     const getListEpisode = await fetch(`http://45.79.198.164:5000/episode?film=${req.query.slug}&season=${seasonPart}`)
@@ -1084,7 +1102,6 @@ app.get('/crawl-soundtracks', async (req, res) => {
       }
       listEpisode.push(temp)
     }
-    const listSoundtrack = dataSoundtrack.dataSoundtrack;
     let listSoundtrackAdd = []
     //format list sountrack 
     for (let i = 0; i < listSoundtrack.length; i++) {
@@ -1159,7 +1176,7 @@ app.get('/crawl-soundtracks', async (req, res) => {
       },
       body: JSON.stringify(listSoundtrackAdd),
     });
-  
+
     formatData.push(postSoundtrackNotEpisode)
   }
   return formatData;
