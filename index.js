@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { scrapeComics, scrapeComicsChapter } = require('./scrapes');
+const { scrapeComics, scrapeComicsChapter, scrapeSoundtrack, scrapeSoundtrackForShow } = require('./scrapes');
 const request = require('request');
 
 const app = express();
@@ -913,7 +913,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.get('/crawl-comics', async(req, res) => {
+app.get('/crawl-comics', async (req, res) => {
   console.log('url', req.query.url);
   let chapter_images = await scrapeComics(req.query.url);
   let fail = chapter_images.filter((chap) => chap == "/Content/images/blank.gif").length;
@@ -932,8 +932,8 @@ app.get('/crawl-comics', async(req, res) => {
         "chapter_name": req.query.chapter_name
       })
     }
-  
-    request(options, function(error, response, body){
+
+    request(options, function (error, response, body) {
       if (error) {
         console.log('Upload: fail');
         console.log('error: ', error);
@@ -952,12 +952,217 @@ app.get('/crawl-comics', async(req, res) => {
   })
 });
 
-app.get('/crawl-comics-chapter', async(req, res) => {
+app.get('/crawl-comics-chapter', async (req, res) => {
   for (const url of listURL) {
     console.log('url', url);
     await scrapeComicsChapter(url);
   }
+
+});
+
+app.get('/crawl-soundtracks', async (req, res) => {
+  console.log('url', req.query.url);
+  console.log('film_id', req.query.film_id);
+  console.log('type', req.query.type);
+  console.log('slug', req.query.slug);
+
+  let dataSoundtrack = req.query.type == 2 ? await scrapeSoundtrack(req.query.url) : await scrapeSoundtrackForShow(req.query.url);
+  // console.log(dataSoundtrack);
+
+  const formatData = []
+  if (req.query.type == 2) {
+    for (let i = 0; i < dataSoundtrack.length; i++) {
+      if (dataSoundtrack[i].soundtrackUrl.includes("youtube")) {
+        const temp = {
+          name: dataSoundtrack[i].soundtrackName,
+          slug: dataSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: dataSoundtrack[i].soundtrackSingle,
+          youtube_link: dataSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        formatData.push(temp)
+      } else if (dataSoundtrack[i].soundtrackUrl.includes("spotify")) {
+        const temp = {
+          name: dataSoundtrack[i].soundtrackName,
+          slug: dataSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: dataSoundtrack[i].soundtrackSingle,
+          spotify_link: dataSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        formatData.push(temp)
+      } else if (dataSoundtrack[i].soundtrackUrl.includes("amazon")) {
+        const temp = {
+          name: dataSoundtrack[i].soundtrackName,
+          slug: dataSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: dataSoundtrack[i].soundtrackSingle,
+          amazon_link: dataSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        formatData.push(temp)
+      } else {
+        const temp = {
+          name: dataSoundtrack[i].soundtrackName,
+          slug: dataSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: dataSoundtrack[i].soundtrackSingle,
+          apple_link: dataSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        formatData.push(temp)
+      }
+    }
+    // console.log(formatData);
+
+    // add soundtrack in db
+    const postSoundtrack = await fetch(`http://45.79.198.164:5000/soundtrack/addList`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formatData),
+    });
+
+    console.log(await postSoundtrack.json());
+  } else {
+    //1. add season
+    const parts = req.query.url.split('/');
+    const lastPart = parts[parts.length - 1];
+    const match = lastPart.match(/season-\d+/);
+    const seasonPart = match[0];
+    const replacedTemp = seasonPart.replace(/-/g, ' ');
+    const capitalizedTemp = replacedTemp.replace(/(^|\s)\S/g, function (match) {
+      return match.toUpperCase();
+    });
+    const seasonData = {
+      name: capitalizedTemp,
+      slug: seasonPart,
+      film_id: req.query.film_id
+    }
+
+    await fetch(`http://45.79.198.164:5000/season/add`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(seasonData),
+    })
+
+    //get season id newest 
+    const listSeasson = await fetch(`http://45.79.198.164:5000/season?film=${req.query.slug}`)
+    const getSeasonEnd = await listSeasson.json()
+    const seasonId = getSeasonEnd[getSeasonEnd.length - 1].id
+    //get list episode newest
+    const listEpisodeAdd = dataSoundtrack.listEpisodeAdd;
+    const episodeArray = []
+    for (let i = 0; i < listEpisodeAdd.length; i++) {
+      const temp = {
+        ...listEpisodeAdd[i],
+        season_id: seasonId
+      }
+      episodeArray.push(temp)
+    }
+    //2. add episode on season id newest
+    await fetch(`http://45.79.198.164:5000/episode/addList`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(episodeArray),
+    })
+
+    //add soundtrack
+    const listEpisodeRes = dataSoundtrack.listEpisode;
+
+    //get id episode
+    const getListEpisode = await fetch(`http://45.79.198.164:5000/episode?film=${req.query.slug}&season=${seasonPart}`)
+    const listEpisodeTemp = await getListEpisode.json();
+    //add id episode to array
+    const listEpisode = []
+    for (let i = 0; i < listEpisodeRes.length; i++) {
+      const temp = {
+        ...listEpisodeRes[i],
+        episode_id: listEpisodeTemp[i].id
+      }
+      listEpisode.push(temp)
+    }
+    const listSoundtrack = dataSoundtrack.dataSoundtrack;
+    let listSoundtrackAdd = []
+    //format list sountrack 
+    for (let i = 0; i < listSoundtrack.length; i++) {
+      if (listSoundtrack[i].soundtrackUrl.includes("youtube")) {
+        const temp = {
+          name: listSoundtrack[i].soundtrackName,
+          slug: listSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: listSoundtrack[i].soundtrackSingle,
+          youtube_link: listSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        listSoundtrackAdd.push(temp)
+      } else if (listSoundtrack[i].soundtrackUrl.includes("spotify")) {
+        const temp = {
+          name: listSoundtrack[i].soundtrackName,
+          slug: listSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: listSoundtrack[i].soundtrackSingle,
+          spotify_link: listSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        listSoundtrackAdd.push(temp)
+      } else if (listSoundtrack[i].soundtrackUrl.includes("amazon")) {
+        const temp = {
+          name: listSoundtrack[i].soundtrackName,
+          slug: listSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: listSoundtrack[i].soundtrackSingle,
+          amazon_link: listSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        listSoundtrackAdd.push(temp)
+      } else {
+        const temp = {
+          name: listSoundtrack[i].soundtrackName,
+          slug: listSoundtrack[i].soundtrackName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and"),
+          artist: listSoundtrack[i].soundtrackSingle,
+          apple_link: listSoundtrack[i].soundtrackUrl,
+          film_id: req.query.film_id
+        }
+        listSoundtrackAdd.push(temp)
+      }
+    }
+    let listSoundtrackTemp = []
+    for (let i = 0; i < listEpisode.length; i++) {
+      const countSong = listEpisode[i].soundtrackCount;
+      listSoundtrackTemp = listSoundtrackAdd.splice(0, countSong)
+
+      const soundtrackArray = []
+      for (let x = 0; x < listSoundtrackTemp.length; x++) {
+        const temp = {
+          ...listSoundtrackTemp[x],
+          episode_id: listEpisode[i].episode_id
+        }
+        soundtrackArray.push(temp)
+      }
+
+      // add soundtrack for episode
+      const postSoundtrack = await fetch(`http://45.79.198.164:5000/soundtrack/addList`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(soundtrackArray),
+      });
+
+      formatData.push(postSoundtrack)
+    }
+    // add soundtrack not episode
+    const postSoundtrackNotEpisode = await fetch(`http://45.79.198.164:5000/soundtrack/addList`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(listSoundtrackAdd),
+    });
   
+    formatData.push(postSoundtrackNotEpisode)
+  }
+  return formatData;
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}`));

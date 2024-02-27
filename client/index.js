@@ -19,3 +19,21 @@ async function crawlComics() {
     console.log(jsonData_comic);
     document.querySelector('#result').textContent = jsonData_comic.message;
 }
+
+async function crawlSoundtrack() {
+    let filmName = document.querySelector('#film_name').value;
+    let urlSoundtrack = document.querySelector('#url_soundtrack').value;
+    document.querySelector('#film_name').value = ''
+    document.querySelector('#url_soundtrack').value = ''
+    let slug = filmName?.toLowerCase().replace(/\s+/g, '-').replace("&", "and");
+
+    const filmInfo = await fetch(`http://45.79.198.164:5000/film/slug?slug=${slug}`);
+    const filmInfoRes = await filmInfo.json();
+    const filmId = filmInfoRes.id
+    const filmType = filmInfoRes.type
+
+    //crawl soundtrack 
+    const data = await fetch(`/crawl-soundtracks?url=${urlSoundtrack}&film_id=${filmId}&type=${filmType}&slug=${slug}`);
+    const dataSoundtrack = await data.json();
+    console.log(dataSoundtrack);
+}
