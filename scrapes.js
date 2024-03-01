@@ -301,11 +301,11 @@ async function scrapeSoundtrackForShow(url) {
       .filter(node => node.nodeType === Node.TEXT_NODE)
       .map(node => node.textContent.trim());
     const value = []
-    const regex = /[\[\]]/;
+    const regex = /[\]’]$/;
     const regex2 = /^\d+\./;
 
     for (const item of textNodes) {
-      if (item != '' && regex.test(item) == false) {
+      if (item != '' && item != '.' && regex.test(item) == false) {
         value.push(item)
       }
     }
@@ -315,7 +315,7 @@ async function scrapeSoundtrackForShow(url) {
     const dataSoundtrack = []
     for (let i = 0; i < listSoundtrack.length; i++) {
       const songName = soundtrackName[i].split(' – ')[0]
-      const singleName = soundtrackName[i].split(' – ')[1]
+      const singleName = soundtrackName[i].split(' – ')[2] ? soundtrackName[i].split(' – ')[2] :soundtrackName[i].split(' – ')[1]
       const temp = {
         soundtrackName: songName,
         soundtrackSingle: singleName ?? songName,
@@ -346,15 +346,29 @@ async function scrapeSoundtrackForShow(url) {
         const dateObject = new Date(year, month - 1, day);
         const formattedDate = `${dateObject.getFullYear()}/${(dateObject.getMonth() + 1).toString().padStart(2, '0')}/${dateObject.getDate().toString().padStart(2, '0')} 00:00:00`;
         //format list episode
+        let nameFormat;
+        const startSingleQuoteIndex = episodeData[i].indexOf('‘');
+        const endSingleQuoteIndex = episodeData[i].indexOf('’');
+        const startParenthesisIndex = episodeData[i].indexOf('(');
+        const endParenthesisIndex = episodeData[i].indexOf(')');
+
+        if (startSingleQuoteIndex !== -1 && endSingleQuoteIndex !== -1) {
+          nameFormat = episodeData[i].slice(startSingleQuoteIndex + 1, endSingleQuoteIndex);
+        } else if (startParenthesisIndex !== -1 && endParenthesisIndex !== -1) {
+          nameFormat = episodeData[i].slice(startParenthesisIndex + 1, endParenthesisIndex);
+        } else {
+          nameFormat = '';
+        }
+
         const temp = {
-          name: "E" + index + " | " + episodeData[i].slice(episodeData[i].indexOf('‘') + 1, episodeData[i].indexOf('’')),
-          slug: episodeData[i].slice(episodeData[i].indexOf('‘') + 1, episodeData[i].indexOf('’')).toLowerCase().replace(/\s+/g, "-"),
+          name: "E" + index + " | " + nameFormat,
+          slug: nameFormat.toLowerCase().replace(/\s+/g, "-"),
           release_date: formattedDate,
           soundtrackCount: episodeData[i].match(/\d+(?= songs)/)[0]
         }
         const temp2 = {
-          name: "E" + index + " | " +  episodeData[i].slice(episodeData[i].indexOf('‘') + 1, episodeData[i].indexOf('’')),
-          slug: episodeData[i].slice(episodeData[i].indexOf('‘') + 1, episodeData[i].indexOf('’')).toLowerCase().replace(/\s+/g, "-"),
+          name: "E" + index + " | " +  nameFormat,
+          slug: nameFormat.toLowerCase().replace(/\s+/g, "-"),
           release_date: formattedDate,
         }
         listEpisode.push(temp)

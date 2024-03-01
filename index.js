@@ -968,7 +968,7 @@ app.get('/crawl-soundtracks', async (req, res) => {
 
   let dataSoundtrack = req.query.type == 2 ? await scrapeSoundtrack(req.query.url) : await scrapeSoundtrackForShow(req.query.url);
   // console.log(dataSoundtrack);
-
+  // return
   const formatData = []
   if (req.query.type == 2) {
     for (let i = 0; i < dataSoundtrack.length; i++) {
@@ -1055,7 +1055,9 @@ app.get('/crawl-soundtracks', async (req, res) => {
     const episodeArray = []
     for (let i = 0; i < listEpisodeAdd.length; i++) {
       const temp = {
-        ...listEpisodeAdd[i],
+        name: listEpisodeAdd[i].name,
+        slug: listEpisodeAdd[i].slug + "-" + seasonId,
+        release_date: listEpisodeAdd[i].release_date,
         season_id: seasonId
       }
       episodeArray.push(temp)
@@ -1063,7 +1065,7 @@ app.get('/crawl-soundtracks', async (req, res) => {
     //add speceial episode
     const specialEpisode = {
       name: 'Special Episode',
-      slug: 'special-episode',
+      slug: `special-episode-${seasonId}`,
       season_id: seasonId
     }
     episodeArray.push(specialEpisode)
@@ -1084,7 +1086,7 @@ app.get('/crawl-soundtracks', async (req, res) => {
     }
     const specialEpisodeWithCount = {
       name: 'Special Episode',
-      slug: 'special-episode',
+      slug: `special-episode-${seasonId}`,
       soundtrackCount: countSpecialEpisode,
       season_id: seasonId
     }
