@@ -241,7 +241,7 @@ async function scrapeSoundtrack(url) {
       .filter(node => node.nodeType === Node.TEXT_NODE)
       .map(node => node.textContent.trim());
     const value = []
-    const regex = /[\[\]]/;
+    const regex = /^\[.*\]$/;
     const regex2 = /^\d+\./;
 
     for (const item of textNodes) {
@@ -302,7 +302,7 @@ async function scrapeSoundtrackForShow(url) {
       .map(node => node.textContent.trim());
     const value = []
     const regex = /[\]’]$/;
-    const regex2 = /^\d+\./;
+    const regex2 = /^\d+\.$/;
 
     for (const item of textNodes) {
       if (item != '' && item != '.' && regex.test(item) == false) {
@@ -331,7 +331,7 @@ async function scrapeSoundtrackForShow(url) {
     const listEpisode = [];
     const listEpisodeAdd = []
     for (let i = 0; i < episodeData.length; i++) {
-      if (episodeData[i].endsWith('songs')) {
+      if (episodeData[i].trim().endsWith('songs') || episodeData[i].trim().endsWith('song')) {
         const index = i + 1;
         //format release date
         const lines = episodeData[i].split('\n');
@@ -364,7 +364,7 @@ async function scrapeSoundtrackForShow(url) {
           name: "E" + index + " | " + nameFormat,
           slug: nameFormat.toLowerCase().replace(/\s+/g, "-"),
           release_date: formattedDate,
-          soundtrackCount: episodeData[i].match(/\d+(?= songs)/)[0]
+          soundtrackCount: episodeData[i].match(/\d+(?= songs| song)/)[0]
         }
         const temp2 = {
           name: "E" + index + " | " +  nameFormat,
