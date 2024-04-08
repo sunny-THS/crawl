@@ -37,3 +37,13 @@ async function crawlSoundtrack() {
     const dataSoundtrack = await data.json();
     console.log(dataSoundtrack);
 }
+
+async function crawlKenmei() {
+    let urlKenmei = document.querySelector('#url_kenmei').value;
+    document.querySelector('#url_kenmei').value = ''
+
+    //crawl kenmei 
+    const data = await fetch(`/crawl-kenmei?url=${urlKenmei}`);
+    const dataSoundtrack = await data.json();
+    console.log(dataSoundtrack);
+}

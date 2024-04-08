@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { scrapeComics, scrapeComicsChapter, scrapeSoundtrack, scrapeSoundtrackForShow } = require('./scrapes');
+const { scrapeComics, scrapeComicsChapter, scrapeSoundtrack, scrapeSoundtrackForShow, scrapeKenmei } = require('./scrapes');
 const request = require('request');
 
 const app = express();
@@ -1182,6 +1182,15 @@ app.get('/crawl-soundtracks', async (req, res) => {
     formatData.push(postSoundtrackNotEpisode)
   }
   return formatData;
+});
+
+app.get('/crawl-kenmei', async (req, res) => {
+  console.log('url', req.query.url);
+  
+  let dataSoundtrack = await scrapeKenmei(req.query.url)
+  console.log(dataSoundtrack);
+
+  return;
 });
 
 app.listen(port, () => console.log(`Example app listening on port ${port}`));

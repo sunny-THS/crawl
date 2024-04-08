@@ -315,7 +315,7 @@ async function scrapeSoundtrackForShow(url) {
     const dataSoundtrack = []
     for (let i = 0; i < listSoundtrack.length; i++) {
       const songName = soundtrackName[i].split(' – ')[0]
-      const singleName = soundtrackName[i].split(' – ')[2] ? soundtrackName[i].split(' – ')[2] :soundtrackName[i].split(' – ')[1]
+      const singleName = soundtrackName[i].split(' – ')[2] ? soundtrackName[i].split(' – ')[2] : soundtrackName[i].split(' – ')[1]
       const temp = {
         soundtrackName: songName,
         soundtrackSingle: singleName ?? songName,
@@ -324,7 +324,7 @@ async function scrapeSoundtrackForShow(url) {
       dataSoundtrack.push(temp)
     }
 
-    
+
     // format list episode
     const episode = document.querySelectorAll('#marked-article > span');
     const episodeData = Array.from(episode).map(link => link.textContent);
@@ -367,7 +367,7 @@ async function scrapeSoundtrackForShow(url) {
           soundtrackCount: episodeData[i].match(/\d+(?= songs| song)/)[0]
         }
         const temp2 = {
-          name: "E" + index + " | " +  nameFormat,
+          name: "E" + index + " | " + nameFormat,
           slug: nameFormat.toLowerCase().replace(/\s+/g, "-"),
           release_date: formattedDate,
         }
@@ -382,6 +382,82 @@ async function scrapeSoundtrackForShow(url) {
   return soundtrackInfo;
 }
 
+async function scrapeKenmei(url) {
+  var index = url.indexOf("series/");
+  if (index === -1) {
+    return null;
+  }
+  var seriesId = url.substring(index + "series/".length);
+
+  const getKenmei = await fetch(`https://api.kenmei.co/api/v1/manga_series/${seriesId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  const resKenmei = await getKenmei.json();
+  const dataKenmei = resKenmei.data;
+
+  //format category
+  let category = []
+  dataKenmei.classifications.forEach(item => {
+    category.push(item.name)
+  });
+  const cateStr = category.join(', ');
+
+  //format mangaSources
+  let mangaSources = []
+  dataKenmei.mangaSources.forEach(item => {
+    const mangaSrc = {
+      "name": item.name,
+      "seriesURL": item.seriesURL,
+      "chaptersCount": item.chaptersCount,
+      "chapters": [
+        {
+          "slug": item.firstChapter.chapterIdentifier,
+          "name": item.firstChapter.title,
+          "url": item.firstChapter.url,
+          "chapter": item.firstChapter.chapter,
+          "releasedAt": item.firstChapter.releasedAt
+        },
+        {
+          "slug": item.latestChapter.chapterIdentifier,
+          "name": item.latestChapter.title,
+          "url": item.latestChapter.url,
+          "chapter": item.latestChapter.chapter,
+          "releasedAt": item.latestChapter.releasedAt
+        }
+      ]
+    }
+    mangaSources.push(mangaSrc)
+  });
+
+  const reqData = {
+    "id": dataKenmei.id,
+    "contentType": dataKenmei.contentType,
+    "category": cateStr,
+    "description": dataKenmei.description,
+    "alternativeTitles": dataKenmei.alternativeTitles,
+    "mangaSources": mangaSources
+  }
+
+
+  try {
+    await fetch(`https://blackdog.vip/api/crawl/comics_info`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(reqData),
+    });
+  } catch (error) {
+    console.log(error);
+  }
+
+  return reqData;
+}
+
 module.exports = {
-  scrapeComics, scrapeComicsChapter, scrapeSoundtrack, scrapeSoundtrackForShow
+  scrapeComics, scrapeComicsChapter, scrapeSoundtrack, scrapeSoundtrackForShow, scrapeKenmei
 }
