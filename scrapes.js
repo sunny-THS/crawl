@@ -434,7 +434,8 @@ async function scrapeKenmei(url) {
   });
 
   const reqData = {
-    "id": dataKenmei.id,
+    "title": dataKenmei.title,
+    "thumbnail": dataKenmei.cover.jpeg.large,
     "contentType": dataKenmei.contentType,
     "category": cateStr,
     "description": dataKenmei.description,
